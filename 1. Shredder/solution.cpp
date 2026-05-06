@@ -128,11 +128,10 @@ string encode(const string& message) {
         return (next_v << 1) | next_edge;
     };
 
-    //size_t repeat = BitStringLength / (2 * (1 << BruijnVertexSize) + (1 << BruijnVertexSize) * BruijnVertexSize);  // сколько раз можем писать цикл безопасно (чтобы точно влезло в BitStringLength битов строки):
-        // 1. Суммарно рёбер (каждое ребро = 1 бит) в графе из 2^BruijnVertexSize вершин у нас в два раза больше -> 2 * (2^BruijnVertexSize)
-        // 2. Плюс мы пишем в начале цикла один раз начальную вершину, всего вершин 2^BruijnVertexSize, а их длина BruijnVertexSize битов
-    // 2 * (1 << BruijnVertexSize) — это ровно 128 (количество рёбер = кол-во бит за один полный проход всех циклов)
-    size_t repeat = (BitStringLength - (1 << BruijnVertexSize) * BruijnVertexSize) / (2 * (1 << BruijnVertexSize));
+    size_t repeat = (BitStringLength - (1 << BruijnVertexSize) * BruijnVertexSize) / (2 * (1 << BruijnVertexSize));   // сколько раз можем писать цикл безопасно (чтобы точно влезло в BitStringLength битов строки):
+        // 1. Мы пишем в начале цикла один раз начальную вершину, всего вершин 2^BruijnVertexSize (и то, вряд ли мы все их напишем, так как большинство из них будут внутри цикла), а их длина BruijnVertexSize битов -> вычитаем это из общей длины (так как начальная вершина не повторяется)
+        // 2. Оставшееся место оставлено для записи рёбер (каждое ребро = 1 бит): в графе из 2^BruijnVertexSize вершин у нас в два раза больше -> 2 * (2^BruijnVertexSize), на это и делим
+        // ! Экономить здесь не нужно, иначе остаток строки (который мы забьём нулями) будет очень большим и испортит статистику (statistics[0] += 1 будет слишком много и точно окажется, что message[0] = '0'...)
 
     vector<bool> used(graph_bruijn.size(), false);  // когда мы приходим в вершину, бит кодируемого сообщения однозначно определяет следующее ребро, по которому пойдём, поэтому
                                                              // элемент цикла = вершина + ребро (по которому пойдём из вершины), их посещения помним в массиве
